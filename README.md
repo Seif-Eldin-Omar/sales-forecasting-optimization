@@ -1,1 +1,1 @@
-# Sales Forecasting & Optimization
+# sales-forecasting-optimization
