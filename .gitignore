@@ -1,1 +1,38 @@
- 
+# Ignore data files (adjust the path based on your project structure)
+data/
+*.csv
+*.xlsx
+*.json
+*.tsv
+*.xml
+
+# Ignore large binary files (if you have other data formats like images, audio, etc.)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp3
+*.wav
+*.zip
+*.tar.gz
+
+# Ignore any virtual environment or package manager files
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+Pipfile.lock
+node_modules/
+
+# Ignore Jupyter Notebooks checkpoints (if you're using Jupyter)
+.ipynb_checkpoints/
+
+# Ignore IDE-specific files (e.g., VSCode, PyCharm, etc.)
+.vscode/
+.idea/
+
+# Ignore log files
+*.log
+
