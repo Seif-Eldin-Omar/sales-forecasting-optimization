@@ -24,7 +24,7 @@ This project aims to predict future sales for a retail or e-commerce business us
 **Tasks:**
 - Acquire a reliable historical dataset.
 - Conduct exploratory data analysis (EDA).
-- Clean the data: handle missing values, remove duplicates, normalize.
+- Clean the data: handle missing values, remove duplicates.
 - Engineer time-based features (e.g., day of week, season, holiday flags).
 
 **Deliverables:**
