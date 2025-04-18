@@ -69,15 +69,8 @@ def preprocess(df):
     df['promo_last_7_days'].fillna(0, inplace=True)  # assume no promos in early data
 
     # =====================
-    # Data Type Optimization
+    # Removing Unnecessary Columns
     # =====================
-    df['week'] = pd.to_numeric(df['week'], errors='coerce').astype('Int8')
-    df['onpromotion'] = df['onpromotion'].astype('int8')
-    df['is_crisis'] = df['is_crisis'].astype('int8')  # this will be redefined later
-    df['is_weekend'] = df['is_weekend'].astype('int8', errors='ignore')  # may be redefined
-    df['is_holiday'] = df['is_holiday'].astype('int8', errors='ignore')  # may be redefined
-    df['store_nbr'] = df['store_nbr'].astype('int16')
-    df['cluster'] = df['cluster'].astype('int8')
+    df.drop(columns=['id', 'locale_name', 'description'], inplace=True)
 
-    
     return df
