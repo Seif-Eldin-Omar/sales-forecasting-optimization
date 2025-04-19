@@ -48,7 +48,7 @@ def preprocess(df):
     )
 
     # Is Weekend
-    df['is_weekend'] = df['day_of_week'].isin([5, 6]).astype('int8')
+    df['is_weekend'] = df['day_of_week'].isin(['Saturday', 'Sunday']).astype('int8')
 
     # Is Holiday
     df['is_holiday'] = (df['holiday_type'] != 'Normal Day').astype('int8')
