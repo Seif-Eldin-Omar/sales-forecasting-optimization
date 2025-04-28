@@ -61,6 +61,14 @@ def preprocess(df):
         .sum()
     )
 
+    # Days Since Start (days_to_holiday)
+    df['days_to_holiday'] = (df['date'] - df['date'].min()).dt.days
+
+    # Promotion Status (Categorical Label)
+    df['promotion_status'] = df['onpromotion'].apply(
+    lambda x: 'On Promotion' if x > 0 else 'Not On Promotion'
+    )
+
     # =====================
     # Fill Feature-Engineered NaNs
     # =====================
