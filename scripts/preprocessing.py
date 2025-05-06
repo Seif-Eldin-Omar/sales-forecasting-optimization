@@ -11,6 +11,11 @@ def preprocess(df):
     Returns:
         pd.DataFrame: The preprocessed DataFrame.
     """
+    
+    # =====================
+    # Data Type Optimization
+    # =====================
+    df['date'] = pd.to_datetime(df['date'])
 
     # =====================
     # Missing Value Handling
@@ -80,5 +85,10 @@ def preprocess(df):
     # Removing Unnecessary Columns
     # =====================
     df.drop(columns=['id', 'locale_name', 'description'], inplace=True)
+
+    # =====================
+    # Removing Duplicates
+    # =====================
+    df = df.sort_values(by=['date', 'store_nbr', 'family']).drop_duplicates(subset=['date', 'store_nbr', 'family'], keep='first')
 
     return df
