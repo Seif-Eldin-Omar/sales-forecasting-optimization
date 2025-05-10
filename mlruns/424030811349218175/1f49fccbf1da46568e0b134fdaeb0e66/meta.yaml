@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/seife/anaconda3/envs/sales_forecasting/sales-forecasting-optimization/mlruns/424030811349218175/1f49fccbf1da46568e0b134fdaeb0e66/artifacts
+end_time: 1746896699493
+entry_point_name: ''
+experiment_id: '424030811349218175'
+lifecycle_stage: active
+run_id: 1f49fccbf1da46568e0b134fdaeb0e66
+run_name: LSTM_with_Embeddings_and_Numerical
+run_uuid: 1f49fccbf1da46568e0b134fdaeb0e66
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1746894482802
+status: 3
+tags: []
+user_id: seife

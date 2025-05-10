@@ -1,0 +1,86 @@
+Model: "model"
+__________________________________________________________________________________________________
+ Layer (type)                Output Shape                 Param #   Connected to                  
+==================================================================================================
+ time_series_input (InputLa  [(None, 1782, 12)]           0         []                            
+ yer)                                                                                             
+                                                                                                  
+ store_nbr_input (InputLaye  [(None, 1782)]               0         []                            
+ r)                                                                                               
+                                                                                                  
+ family_input (InputLayer)   [(None, 1782)]               0         []                            
+                                                                                                  
+ holiday_type_input (InputL  [(None, 1782)]               0         []                            
+ ayer)                                                                                            
+                                                                                                  
+ locale_input (InputLayer)   [(None, 1782)]               0         []                            
+                                                                                                  
+ city_input (InputLayer)     [(None, 1782)]               0         []                            
+                                                                                                  
+ state_input (InputLayer)    [(None, 1782)]               0         []                            
+                                                                                                  
+ store_type_input (InputLay  [(None, 1782)]               0         []                            
+ er)                                                                                              
+                                                                                                  
+ promotion_status_input (In  [(None, 1782)]               0         []                            
+ putLayer)                                                                                        
+                                                                                                  
+ day_of_week_input (InputLa  [(None, 1782)]               0         []                            
+ yer)                                                                                             
+                                                                                                  
+ bidirectional (Bidirection  (None, 1782, 128)            39424     ['time_series_input[0][0]']   
+ al)                                                                                              
+                                                                                                  
+ store_nbr_embedding (Embed  (None, 1782, 10)             540       ['store_nbr_input[0][0]']     
+ ding)                                                                                            
+                                                                                                  
+ family_embedding (Embeddin  (None, 1782, 10)             330       ['family_input[0][0]']        
+ g)                                                                                               
+                                                                                                  
+ holiday_type_embedding (Em  (None, 1782, 10)             70        ['holiday_type_input[0][0]']  
+ bedding)                                                                                         
+                                                                                                  
+ locale_embedding (Embeddin  (None, 1782, 10)             40        ['locale_input[0][0]']        
+ g)                                                                                               
+                                                                                                  
+ city_embedding (Embedding)  (None, 1782, 10)             220       ['city_input[0][0]']          
+                                                                                                  
+ state_embedding (Embedding  (None, 1782, 10)             160       ['state_input[0][0]']         
+ )                                                                                                
+                                                                                                  
+ store_type_embedding (Embe  (None, 1782, 10)             50        ['store_type_input[0][0]']    
+ dding)                                                                                           
+                                                                                                  
+ promotion_status_embedding  (None, 1782, 10)             20        ['promotion_status_input[0][0]
+  (Embedding)                                                       ']                            
+                                                                                                  
+ day_of_week_embedding (Emb  (None, 1782, 10)             70        ['day_of_week_input[0][0]']   
+ edding)                                                                                          
+                                                                                                  
+ concatenate (Concatenate)   (None, 1782, 218)            0         ['bidirectional[0][0]',       
+                                                                     'store_nbr_embedding[0][0]', 
+                                                                     'family_embedding[0][0]',    
+                                                                     'holiday_type_embedding[0][0]
+                                                                    ',                            
+                                                                     'locale_embedding[0][0]',    
+                                                                     'city_embedding[0][0]',      
+                                                                     'state_embedding[0][0]',     
+                                                                     'store_type_embedding[0][0]',
+                                                                     'promotion_status_embedding[0
+                                                                    ][0]',                        
+                                                                     'day_of_week_embedding[0][0]'
+                                                                    ]                             
+                                                                                                  
+ dense (Dense)               (None, 1782, 128)            28032     ['concatenate[0][0]']         
+                                                                                                  
+ dropout (Dropout)           (None, 1782, 128)            0         ['dense[0][0]']               
+                                                                                                  
+ dense_1 (Dense)             (None, 1782, 1)              129       ['dropout[0][0]']             
+                                                                                                  
+ output_flatten (Flatten)    (None, 1782)                 0         ['dense_1[0][0]']             
+                                                                                                  
+==================================================================================================
+Total params: 69085 (269.86 KB)
+Trainable params: 69085 (269.86 KB)
+Non-trainable params: 0 (0.00 Byte)
+__________________________________________________________________________________________________
