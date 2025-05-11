@@ -97,7 +97,7 @@ mse = mean_squared_error(y_test_real, y_pred)
 rmse = np.sqrt(mse)
 r2 = r2_score(y_test_real, y_pred)
 
-print(f'Baseline Linear Regression \nMSE: {mse:.2f} \nRMSE: {rmse:.2f} \nR2: {r2:.2f}')
+print(f'XGBoost \nMSE: {mse:.2f} \nRMSE: {rmse:.2f} \nR2: {r2:.2f}')
 
 xgb.plot_importance(model, max_num_features=15)
 plt.tight_layout()

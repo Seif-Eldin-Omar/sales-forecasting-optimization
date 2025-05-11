@@ -2,6 +2,7 @@ import mlflow.tensorflow
 import mlflow.tensorflow
 import pandas as pd
 import numpy as np
+import joblib
 from sklearn.preprocessing import LabelEncoder, RobustScaler
 from sklearn.metrics import mean_squared_error, r2_score
 from tensorflow.keras.models import Model # type: ignore
@@ -9,11 +10,10 @@ from tensorflow.keras.layers import LSTM, Dense, Dropout, Embedding, Flatten, In
 from tensorflow.keras.callbacks import EarlyStopping # type: ignore
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os # For creating artifact directories
+import os 
 
-# --- MLflow Imports ---
 import mlflow
-import mlflow.tensorflow # Ensure this is imported if not already
+import mlflow.tensorflow 
 mlflow_callback = mlflow.tensorflow.MlflowCallback(log_every_epoch=True)
 
 pd.set_option('display.max_columns', None)
@@ -23,17 +23,13 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # --- MLflow Setup ---
-# Define an experiment name. MLflow will create it if it doesn't exist.
-EXPERIMENT_NAME = "Sales_Forecasting_LSTM_v2" # Choose a descriptive name
+EXPERIMENT_NAME = "Sales_Forecasting_LSTM_v2" 
 mlflow.set_experiment(EXPERIMENT_NAME)
 
 # --- Start an MLflow Run ---
-# It's good practice to wrap your training and evaluation in a run context
-with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional: give your run a name
-    # Log script name or a tag for context (optional)
+with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): 
     mlflow.set_tag("mlflow.source.name", "lstm_sales_forecasting_script.py")
 
-    # Assume df is loaded as in your script
     df = pd.read_csv('data/cleaned_data.csv', parse_dates=['date'])
     
 
@@ -55,11 +51,6 @@ with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional
     mlflow.log_param("target_column", target_col)
     mlflow.log_param("categorical_features_embedding_count", len(cat_features_for_embedding))
     mlflow.log_param("numerical_features_lstm_count", len(numerical_features_for_lstm))
-    # Log the lists themselves as artifacts if they are long, or as params if short enough (MLflow param values have length limits)
-    # For simplicity here, let's log counts. You can save the full lists to a file and log as artifact.
-    # Example:
-    # with open("cat_features.txt", "w") as f: for item in cat_features_for_embedding: f.write("%s\n" % item)
-    # mlflow.log_artifact("cat_features.txt", artifact_path="feature_lists")
 
 
     # --- PREPROCESSING ---
@@ -75,20 +66,16 @@ with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional
             le = LabelEncoder()
             df[col] = le.fit_transform(df[col].astype(str))
             label_encoders[col] = le
-            # Optionally save label encoders and log them as artifacts if needed for inference later
-            # import joblib
-            # encoder_path = f"label_encoder_{col}.joblib"
-            # joblib.dump(le, encoder_path)
-            # mlflow.log_artifact(encoder_path, artifact_path="label_encoders")
+            encoder_path = f"label_encoder_{col}.joblib"
+            joblib.dump(le, encoder_path)
+            mlflow.log_artifact(encoder_path, artifact_path="label_encoders")
 
 
     scaler = RobustScaler()
     df[numerical_features_for_lstm] = scaler.fit_transform(df[numerical_features_for_lstm])
-    # Optionally save the scaler and log as artifact
-    # import joblib
-    # scaler_path = "robust_scaler_numerical.joblib"
-    # joblib.dump(scaler, scaler_path)
-    # mlflow.log_artifact(scaler_path, artifact_path="scalers")
+    scaler_path = "robust_scaler_numerical.joblib"
+    joblib.dump(scaler, scaler_path)
+    mlflow.log_artifact(scaler_path, artifact_path="scalers")
 
 
     df.sort_values(by=['date', 'store_nbr', 'family'], inplace=True)
@@ -178,7 +165,6 @@ with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional
 
     model = Model(inputs=categorical_input_layers + [time_series_input], outputs=output_final)
     model.compile(optimizer=optimizer_name, loss=loss_function)
-    # model.summary() # Can be logged as an artifact
 
     # Log model summary as an artifact
     summary_path = "model_summary.txt"
@@ -188,9 +174,9 @@ with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional
 
 
     # --- MODEL TRAINING ---
-    epochs = 100 # Original was 20
-    batch_size = 32 # Original was 64
-    early_stopping_patience = 10 # Original was 5
+    epochs = 100 
+    batch_size = 32 
+    early_stopping_patience = 10 
 
     mlflow.log_param("epochs", epochs)
     mlflow.log_param("batch_size", batch_size)
@@ -200,9 +186,7 @@ with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional
         early_stop = EarlyStopping(monitor='val_loss', patience=early_stopping_patience, restore_best_weights=True)
 
         # --- MLflow Keras Callback ---
-        # This callback automatically logs metrics like loss and val_loss per epoch,
-        # and can also log the model itself.
-        mlflow_callback = mlflow.tensorflow.MlflowCallback(log_every_epoch=True) # Can add other options
+        mlflow_callback = mlflow.tensorflow.MlflowCallback(log_every_epoch=True)
 
         print("Starting model training with MLflow logging...")
         history = model.fit(
@@ -211,12 +195,11 @@ with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional
             epochs=epochs,
             batch_size=batch_size,
             validation_data=(X_val_categorical_inputs + [X_val_numerical], y_val),
-            callbacks=[early_stop, mlflow_callback] # Add MLflow callback here
+            callbacks=[early_stop, mlflow_callback] 
         )
         print("Model training finished.")
 
         # --- Log Training History Plot as Artifact ---
-        # Create a directory for plots if it doesn't exist
         plot_dir = "plots"
         if not os.path.exists(plot_dir):
             os.makedirs(plot_dir)
@@ -230,8 +213,8 @@ with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional
         plt.ylabel('Mean Squared Error (Log Scale)')
         plt.legend()
         plt.grid(True)
-        plt.savefig(loss_plot_path) # Save the plot
-        plt.close() # Close the plot to free memory
+        plt.savefig(loss_plot_path)
+        plt.close() 
         mlflow.log_artifact(loss_plot_path, artifact_path="training_plots")
         print(f"Logged training loss plot to MLflow: {loss_plot_path}")
 
@@ -247,7 +230,7 @@ with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional
 
 
     # --- MODEL EVALUATION ---
-    if n_test_days > 0 and (n_train_days > 0 and n_val_days > 0): # Ensure model was trained
+    if n_test_days > 0 and (n_train_days > 0 and n_val_days > 0):
         print("Starting model evaluation...")
         y_pred_log_scale = model.predict(X_test_categorical_inputs + [X_test_numerical])
 
@@ -291,8 +274,8 @@ with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional
             plt.title('Actual vs. Predicted Sales (Sample on Original Scale)')
             plt.legend()
             plt.grid(True)
-            plt.savefig(actual_vs_pred_plot_path) # Save the plot
-            plt.close() # Close the plot
+            plt.savefig(actual_vs_pred_plot_path) 
+            plt.close() 
             mlflow.log_artifact(actual_vs_pred_plot_path, artifact_path="evaluation_plots")
             print(f"Logged actual vs predicted plot to MLflow: {actual_vs_pred_plot_path}")
         else:
@@ -300,20 +283,17 @@ with mlflow.start_run(run_name="LSTM_with_Embeddings_and_Numerical"): # Optional
             mlflow.log_param("evaluation_original_scale_skipped", True)
 
         # --- Log Keras Model to MLflow ---
-        # This logs the model in MLflow's format, which can include a Conda environment and a signature.
-        # You can also log the raw Keras model (e.g., .h5 file) as an artifact if preferred.
         print("Logging Keras model to MLflow...")
         mlflow.tensorflow.log_model(
             model,
-            artifact_path="tensorflow_lstm_sales_model" # This will be the directory name in MLflow artifacts
-            # registered_model_name="LSTM_Sales_Forecaster" # Optional: Register the model in MLflow Model Registry
+            artifact_path="tensorflow_lstm_sales_model" 
         )
         print("Tensorflow model logged to MLflow.")
 
         # --- Save Model as .h5 file in 'models' folder ---
         models_dir = "models"
-        os.makedirs(models_dir, exist_ok=True) # Create 'models' directory if it doesn't exist
-        h5_model_path = os.path.join(models_dir, "lstm_sales_forecaster.h5")
+        os.makedirs(models_dir, exist_ok=True) 
+        h5_model_path = os.path.join(models_dir, "lstm_model.h5")
         model.save(h5_model_path)
         print(f"Keras model saved locally in .h5 format: {h5_model_path}")
 

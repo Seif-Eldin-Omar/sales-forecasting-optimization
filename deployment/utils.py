@@ -1,77 +1,63 @@
-import pandas as pd
 import numpy as np
-from sklearn.preprocessing import LabelEncoder
 import joblib
-import os
+from datetime import datetime
 
-def preprocess_input(input_df, reference_df=None):
-    input_df = input_df.copy()
+# Constants
+N_ROWS_PER_DAY = 1782
 
-    # If reference_df is not provided, load the cleaned_data.csv dynamically
-    if reference_df is None:
-        reference_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'cleaned_data.csv')
-        reference_df = pd.read_csv(reference_path, parse_dates=['date'])
+NUMERICAL_FEATURES = [
+    'onpromotion', 'dcoilwtico', 'cluster', 'transactions', 'year', 'month', 'week', 'quarter',
+    'day_of_week', 'is_crisis', 'sales_lag_7', 'rolling_mean_7', 'is_weekend', 'is_holiday',
+    'promo_last_7_days', 'days_to_holiday'
+]
 
-    # Handle missing values for 'locale', 'store_type', and 'promotion_status'
-    input_df['locale'].fillna('None', inplace=True)
-    reference_df['locale'].fillna('None', inplace=True)
+CATEGORICAL_FEATURES = [
+    'store_nbr', 'family', 'locale', 'city', 'state', 'holiday_type',
+    'store_type', 'promotion_status'
+]
 
-    input_df['store_type'].fillna('None', inplace=True)
-    reference_df['store_type'].fillna('None', inplace=True)
+DAYS_MAP = {
+    'Monday': 0,
+    'Tuesday': 1,
+    'Wednesday': 2,
+    'Thursday': 3,
+    'Friday': 4,
+    'Saturday': 5,
+    'Sunday': 6
+}
 
-    input_df['promotion_status'].fillna('Inactive', inplace=True)
-    reference_df['promotion_status'].fillna('Inactive', inplace=True)
+def preprocess_input(user_df):
+    # Map day_of_week
+    user_df['day_of_week'] = user_df['day_of_week'].map(DAYS_MAP).astype(int)
 
-    # Identify categorical columns
-    categorical_cols = reference_df.select_dtypes(include=['object', 'category']).columns
-    low_cardinality = [col for col in categorical_cols if reference_df[col].nunique() <= 5]
-    high_cardinality = [col for col in categorical_cols if reference_df[col].nunique() > 5]
+    # Apply label encoders
+    for col in CATEGORICAL_FEATURES:
+        if col != 'day_of_week':
+            le = joblib.load(f'mlruns\\424030811349218175\\53eb1701038b4c1797d4afa444dd8cd8\\artifacts\\label_encoders\\label_encoder_{col}.joblib')
+            user_df[col] = le.transform(user_df[col].astype(str))
 
-    # Encode low cardinality with LabelEncoder
-    for col in low_cardinality:
-        le = LabelEncoder()
-        le.fit(reference_df[col])
-        # Handle unseen labels by defaulting to -1
-        input_df[col] = input_df[col].apply(lambda x: le.transform([x])[0] if x in le.classes_ else -1)
+    # Scale numerical features
+    scaler = joblib.load("mlruns\\424030811349218175\\53eb1701038b4c1797d4afa444dd8cd8\\artifacts\\scalers\\robust_scaler_numerical.joblib")
+    X_num = scaler.transform(user_df[NUMERICAL_FEATURES]).astype(np.float32)
 
-    # Target encoding for high cardinality
-    for col in high_cardinality:
-        # Check if the column exists in the input data
-        if col in input_df.columns:
-            target_map = reference_df.groupby(col)['sales'].mean()
-            input_df[col + '_target'] = input_df[col].map(target_map)
-            input_df.drop(columns=[col], inplace=True)
-        else:
-            print(f"Warning: Column '{col}' not found in input data. Skipping target encoding for this column.")
-
-    # Drop the original low cardinality columns after encoding
-    input_df.drop(columns=low_cardinality, inplace=True)
-
-    # Convert data to numeric
-    input_df = input_df.apply(pd.to_numeric, errors='ignore')
-
-    # Cast specific columns like 'transferred' if necessary
-    if 'transferred' in input_df.columns:
-        input_df['transferred'] = input_df['transferred'].astype(int)
-
-    # Reorder columns to match the model's expected feature order
-    expected_columns = [
-        'store_nbr', 'onpromotion', 'transferred', 'dcoilwtico', 'cluster', 'transactions', 
-        'year', 'month', 'week', 'quarter', 'is_crisis', 'sales_lag_7', 'rolling_mean_7', 
-        'is_weekend', 'is_holiday', 'promo_last_7_days', 'days_to_holiday', 'locale', 
-        'store_type', 'promotion_status', 'family_target', 'holiday_type_target', 
-        'city_target', 'state_target', 'day_of_week_target'
+    # Reshape
+    X_num = X_num.reshape((1, N_ROWS_PER_DAY, len(NUMERICAL_FEATURES)))
+    X_cat = [
+        user_df[col].astype(np.int32).to_numpy().reshape((1, N_ROWS_PER_DAY))
+        for col in CATEGORICAL_FEATURES
     ]
 
-    # Ensure input_df contains all the required columns (add missing ones if necessary)
-    for col in expected_columns:
-        if col not in input_df.columns:
-            input_df[col] = 0  # Fill with zeros or a default value
+    return X_cat + [X_num]
 
-    input_df = input_df[expected_columns]  # Reorder columns to match the model
 
-    return input_df
+def preprocess_output(log_preds):
+    """
+    Converts model predictions from log scale back to original scale.
 
-def load_model(path='models/xgb_model.pkl'):
-    model_path = os.path.join(os.path.dirname(__file__), '..', path)
-    return joblib.load(model_path)
+    Args:
+        log_preds (np.ndarray): Log-scaled predictions (e.g. from model.predict()).
+
+    Returns:
+        np.ndarray: Original-scale predictions (after expm1).
+    """
+    return np.expm1(log_preds)

@@ -1,47 +1,89 @@
 import streamlit as st
-import joblib
+from tensorflow.keras.models import load_model # type: ignore
 import numpy as np
 import pandas as pd
 import os
-from utils import preprocess_input, load_model
+from utils import preprocess_input, preprocess_output
 
-# Load model with absolute path
-model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'xgb_model.pkl')
-model = joblib.load(model_path)
+model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'lstm_model.h5')
+model = load_model(model_path)
 
-st.title("Sales Forecasting using XGBoost")
+st.title("Sales Forecasting using /LSTM")
 
+
+st.write("This app predicts sales based on various input features.")
+st.write("Please enter the following details:")
+
+# =======================
+# ==== Input fields =====
+# =======================
 store_nbr = st.number_input("Store Number", min_value=1, max_value=100)
-family = st.selectbox("Product Family", ['AUTOMOTIVE', 'BABY CARE', 'BEAUTY', 'BEVERAGES'])
+
+family = st.selectbox("Product Family", ['AUTOMOTIVE', 'BABY CARE', 'BEAUTY', 'BEVERAGES', 'BOOKS',
+       'BREAD/BAKERY', 'CELEBRATION', 'CLEANING', 'DAIRY', 'DELI', 'EGGS',
+       'FROZEN FOODS', 'GROCERY I', 'GROCERY II', 'HARDWARE',
+       'HOME AND KITCHEN I', 'HOME AND KITCHEN II', 'HOME APPLIANCES',
+       'HOME CARE', 'LADIESWEAR', 'LAWN AND GARDEN', 'LINGERIE',
+       'LIQUOR,WINE,BEER', 'MAGAZINES', 'MEATS', 'PERSONAL CARE',
+       'PET SUPPLIES', 'PLAYERS AND ELECTRONICS', 'POULTRY',
+       'PREPARED FOODS', 'PRODUCE', 'SCHOOL AND OFFICE SUPPLIES',
+       'SEAFOOD'])
+
 onpromotion = st.number_input("On Promotion", min_value=0, max_value=100)
+
 locale = st.selectbox("Locale", ['None', 'Local', 'Regional', 'National'])
-transferred = st.selectbox("Transferred", [0, 1])
+
 dcoilwtico = st.number_input("Crude Oil Price", min_value=0.0)
+
 city = st.selectbox("City", ['Quito', 'Cayambe', 'Latacunga', 'Riobamba', 'Ibarra',
         'Santo Domingo', 'Guaranda', 'Puyo', 'Ambato', 'Guayaquil',
         'Salinas', 'Daule', 'Babahoyo', 'Quevedo', 'Playas', 'Libertad',
-        'Cuenca', 'Loja', 'Machala', 'Esmeraldas', 'Manta', 'El Carmen'])  # Use your actual values
+        'Cuenca', 'Loja', 'Machala', 'Esmeraldas', 'Manta', 'El Carmen'])  
+
 state = st.selectbox("State", ['Pichincha', 'Cotopaxi', 'Chimborazo', 'Imbabura',
         'Santo Domingo de los Tsachilas', 'Bolivar', 'Pastaza',
         'Tungurahua', 'Guayas', 'Santa Elena', 'Los Rios', 'Azuay', 'Loja',
-        'El Oro', 'Esmeraldas', 'Manabi'])  # Use your actual values
+        'El Oro', 'Esmeraldas', 'Manabi'])  
+
 store_type = st.selectbox("Store Type", ['A', 'B', 'C', 'D', 'E'])
+
 cluster = st.number_input("Cluster", min_value=1, max_value=20)
+
 transactions = st.number_input("Transactions", min_value=0)
+
 year = st.number_input("Year", min_value=2013, max_value=2030)
+
 month = st.number_input("Month", min_value=1, max_value=12)
+
 week = st.number_input("Week", min_value=1, max_value=53)
+
 quarter = st.number_input("Quarter", min_value=1, max_value=4)
-day_of_week = st.number_input("Day of Week", min_value=0, max_value=6)
+
+day_of_week = st.selectbox("Day of Week", ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+
 is_crisis = st.selectbox("Is Crisis", [0, 1])
+
 sales_lag_7 = st.number_input("Sales Lag 7", min_value=0.0)
+
 rolling_mean_7 = st.number_input("Rolling Mean 7", min_value=0.0)
+
 is_weekend = st.selectbox("Is Weekend", [0, 1])
+
 is_holiday = st.selectbox("Is Holiday", [0, 1])
+
 promo_last_7_days = st.number_input("Promo Last 7 Days", min_value=0)
+
 days_to_holiday = st.number_input("Days to Holiday", min_value=0)
+
 promotion_status = st.selectbox("Promotion Status", ['Active', 'Inactive'])
+
 holiday_type = st.selectbox("Holiday Type", ['Work Day', 'Transfer', 'Additional', 'Holiday', 'Bridge', 'Event', 'None'])
+
+
+# ====================
+# ==== Prediction ====
+# ====================
+st.write("### Prediction Result")
 
 if st.button("Predict Sales"):
     input_data = pd.DataFrame({
@@ -49,11 +91,10 @@ if st.button("Predict Sales"):
         'family': [family],
         'onpromotion': [onpromotion],
         'locale': [locale],
-        'transferred': [transferred],
         'dcoilwtico': [dcoilwtico],
         'city': [city],
         'state': [state],
-        'holiday_type': [holiday_type],  # NEW FIELD
+        'holiday_type': [holiday_type], 
         'store_type': [store_type],
         'cluster': [cluster],
         'transactions': [transactions],
@@ -61,7 +102,7 @@ if st.button("Predict Sales"):
         'month': [month],
         'week': [week],
         'quarter': [quarter],
-        'day_of_week': [day_of_week],  # RAW (not encoded yet)
+        'day_of_week': [day_of_week],  
         'is_crisis': [is_crisis],
         'sales_lag_7': [sales_lag_7],
         'rolling_mean_7': [rolling_mean_7],
@@ -74,6 +115,6 @@ if st.button("Predict Sales"):
 
     input_data = preprocess_input(input_data)
     prediction = model.predict(input_data)
-    prediction = np.expm1(prediction)
+    prediction = preprocess_output(prediction)
 
     st.success(f"Predicted Sales: {prediction[0]:.2f}")
