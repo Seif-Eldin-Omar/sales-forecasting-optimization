@@ -1,37 +1,27 @@
 import streamlit as st
-from tensorflow.keras.models import load_model # type: ignore
+import joblib
 import numpy as np
 import pandas as pd
 import os
-from utils import preprocess_input, preprocess_output
+from utils import preprocess_input
 
-model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'lstm_model.h5')
-model = load_model(model_path)
+# Load model with absolute path
+model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'xgb_model.pkl')
+model = joblib.load(model_path)
 
-st.title("Sales Forecasting using /LSTM")
+st.title("Sales Forecasting using XGBoost")
 
 
-st.write("This app predicts sales based on various input features.")
-st.write("Please enter the following details:")
 
-# =======================
-# ==== Input fields =====
-# =======================
 store_nbr = st.number_input("Store Number", min_value=1, max_value=100)
 
-family = st.selectbox("Product Family", ['AUTOMOTIVE', 'BABY CARE', 'BEAUTY', 'BEVERAGES', 'BOOKS',
-       'BREAD/BAKERY', 'CELEBRATION', 'CLEANING', 'DAIRY', 'DELI', 'EGGS',
-       'FROZEN FOODS', 'GROCERY I', 'GROCERY II', 'HARDWARE',
-       'HOME AND KITCHEN I', 'HOME AND KITCHEN II', 'HOME APPLIANCES',
-       'HOME CARE', 'LADIESWEAR', 'LAWN AND GARDEN', 'LINGERIE',
-       'LIQUOR,WINE,BEER', 'MAGAZINES', 'MEATS', 'PERSONAL CARE',
-       'PET SUPPLIES', 'PLAYERS AND ELECTRONICS', 'POULTRY',
-       'PREPARED FOODS', 'PRODUCE', 'SCHOOL AND OFFICE SUPPLIES',
-       'SEAFOOD'])
+family = st.selectbox("Product Family", ['AUTOMOTIVE', 'BABY CARE', 'BEAUTY', 'BEVERAGES'])
 
 onpromotion = st.number_input("On Promotion", min_value=0, max_value=100)
 
 locale = st.selectbox("Locale", ['None', 'Local', 'Regional', 'National'])
+
+transferred = st.selectbox("Transferred", [0, 1])
 
 dcoilwtico = st.number_input("Crude Oil Price", min_value=0.0)
 
@@ -59,7 +49,7 @@ week = st.number_input("Week", min_value=1, max_value=53)
 
 quarter = st.number_input("Quarter", min_value=1, max_value=4)
 
-day_of_week = st.selectbox("Day of Week", ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+day_of_week = st.number_input("Day of Week", min_value=0, max_value=6)
 
 is_crisis = st.selectbox("Is Crisis", [0, 1])
 
@@ -79,22 +69,17 @@ promotion_status = st.selectbox("Promotion Status", ['Active', 'Inactive'])
 
 holiday_type = st.selectbox("Holiday Type", ['Work Day', 'Transfer', 'Additional', 'Holiday', 'Bridge', 'Event', 'None'])
 
-
-# ====================
-# ==== Prediction ====
-# ====================
-st.write("### Prediction Result")
-
 if st.button("Predict Sales"):
     input_data = pd.DataFrame({
         'store_nbr': [store_nbr],
         'family': [family],
         'onpromotion': [onpromotion],
         'locale': [locale],
+        'transferred': [transferred],
         'dcoilwtico': [dcoilwtico],
         'city': [city],
         'state': [state],
-        'holiday_type': [holiday_type], 
+        'holiday_type': [holiday_type],  
         'store_type': [store_type],
         'cluster': [cluster],
         'transactions': [transactions],
@@ -115,6 +100,6 @@ if st.button("Predict Sales"):
 
     input_data = preprocess_input(input_data)
     prediction = model.predict(input_data)
-    prediction = preprocess_output(prediction)
+    prediction = np.expm1(prediction)
 
     st.success(f"Predicted Sales: {prediction[0]:.2f}")
