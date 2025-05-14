@@ -15,7 +15,15 @@ st.title("Sales Forecasting using XGBoost")
 
 store_nbr = st.number_input("Store Number", min_value=1, max_value=100)
 
-family = st.selectbox("Product Family", ['AUTOMOTIVE', 'BABY CARE', 'BEAUTY', 'BEVERAGES'])
+family = st.selectbox("Product Family", ['AUTOMOTIVE', 'BABY CARE', 'BEAUTY', 'BEVERAGES', 'BOOKS',
+       'BREAD/BAKERY', 'CELEBRATION', 'CLEANING', 'DAIRY', 'DELI', 'EGGS',
+       'FROZEN FOODS', 'GROCERY I', 'GROCERY II', 'HARDWARE',
+       'HOME AND KITCHEN I', 'HOME AND KITCHEN II', 'HOME APPLIANCES',
+       'HOME CARE', 'LADIESWEAR', 'LAWN AND GARDEN', 'LINGERIE',
+       'LIQUOR,WINE,BEER', 'MAGAZINES', 'MEATS', 'PERSONAL CARE',
+       'PET SUPPLIES', 'PLAYERS AND ELECTRONICS', 'POULTRY',
+       'PREPARED FOODS', 'PRODUCE', 'SCHOOL AND OFFICE SUPPLIES',
+       'SEAFOOD'])
 
 onpromotion = st.number_input("On Promotion", min_value=0, max_value=100)
 
