@@ -1,10 +1,5 @@
 # Ignore data files (adjust the path based on your project structure)
 data/
-*.csv
-*.xlsx
-*.json
-*.tsv
-*.xml
 
 # Ignore large binary files (if you have other data formats like images, audio, etc.)
 *.gif

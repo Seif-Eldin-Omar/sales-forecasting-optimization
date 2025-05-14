@@ -65,7 +65,7 @@ promo_last_7_days = st.number_input("Promo Last 7 Days", min_value=0)
 
 days_to_holiday = st.number_input("Days to Holiday", min_value=0)
 
-promotion_status = st.selectbox("Promotion Status", ['Active', 'Inactive'])
+promotion_status = st.selectbox("Promotion Status", ['Not On Promotion', 'On Promotion'])
 
 holiday_type = st.selectbox("Holiday Type", ['Work Day', 'Transfer', 'Additional', 'Holiday', 'Bridge', 'Event', 'None'])
 

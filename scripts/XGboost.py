@@ -9,7 +9,7 @@ import warnings
 import joblib
 
 pd.set_option('display.max_columns', None)
-pd.set_option('display.float_format', '{:.2f}'.format)
+pd.set_option('display.float_format', '{:.3f}'.format)
 warnings.filterwarnings("ignore")
 
 df = pd.read_csv('data/cleaned_data.csv', parse_dates=['date'])
@@ -42,15 +42,23 @@ print("Numerical Columns:", train_df_copy.select_dtypes(exclude=['object', 'cate
 train_df_encoded = pd.DataFrame(index=train_df_copy.index)
 test_df_encoded = pd.DataFrame(index=test_df_copy.index)
 
+encoders = {}
 for col in low_cardinality:
     le = LabelEncoder()
     train_df_encoded[col] = le.fit_transform(train_df_copy[col])
     test_df_encoded[col] = le.transform(test_df_copy[col])
+    encoders[col] = le
 
+joblib.dump(encoders, 'artifacts/label_encoders.pkl')
+
+target_means = {}
 for col in high_cardinality:
     train_mean_target = train_df_copy.groupby(col)['sales'].mean()
     train_df_encoded[col + '_target'] = train_df_copy[col].map(train_mean_target)
     test_df_encoded[col + '_target'] = test_df_copy[col].map(train_mean_target)
+    target_means[col] = train_mean_target.to_dict()
+
+joblib.dump(target_means, 'artifacts/target_encodings.pkl')    
 
 train_df_final = train_df_copy.drop(columns=low_cardinality + high_cardinality)
 test_df_final = test_df_copy.drop(columns=low_cardinality + high_cardinality)
@@ -87,7 +95,6 @@ model = xgb.XGBRegressor(
 )
 
 model.fit(X_train, y_train)
-joblib.dump(model, 'models/xgb_model.pkl')
 
 y_pred = model.predict(X_test)
 y_pred = np.expm1(y_pred)
@@ -97,8 +104,14 @@ mse = mean_squared_error(y_test_real, y_pred)
 rmse = np.sqrt(mse)
 r2 = r2_score(y_test_real, y_pred)
 
-print(f'XGBoost \nMSE: {mse:.2f} \nRMSE: {rmse:.2f} \nR2: {r2:.2f}')
+print(f'XGBoost \nMSE: {mse:.3f} \nRMSE: {rmse:.3f} \nR2: {r2:.3f}')
 
 xgb.plot_importance(model, max_num_features=15)
 plt.tight_layout()
 plt.show()
+
+if r2 > 0.919:
+    joblib.dump(model, 'models/xgb_model.pkl')
+    print("Model saved successfully.")
+else:
+    print("Model performance is not satisfactory. Not saving the model.")
